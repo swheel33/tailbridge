@@ -22,7 +22,7 @@ DEFAULT_PORT = 45871
 MAX_ITEM_BYTES = 100 * 1024 * 1024
 CLAIM_TTL_SECONDS = 5 * 60
 QR_VERSION = 10
-INSTALL_URL = "https://www.icloud.com/shortcuts/3d75e35a6ebd4874adeb0351b0db5049"
+INSTALL_URL = "https://www.icloud.com/shortcuts/9fcd515c2a454cd9a18c70cea4898f8d"
 IMAGE_TYPES = (
     "image/png",
     "image/jpeg",

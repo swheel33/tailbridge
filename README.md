@@ -124,7 +124,7 @@ Also delete the Tailbridge Shortcut and `iCloud Drive/Shortcuts/Tailbridge.txt` 
 cherri Tailbridge.cherri --share=anyone --hubsign
 ```
 
-Import the resulting `.shortcut` file on an iPhone, choose **Copy iCloud Link**, update `INSTALL_URL` in `bridge.py`, and verify the installation QR before releasing the change. Apple does not provide a supported Linux API for publishing an iCloud Shortcut link.
+Import the resulting `.shortcut` file on an iPhone, duplicate it in Shortcuts, delete the imported original, and rename the native duplicate to Tailbridge. Test that **Always Allow** permissions persist, choose **Copy iCloud Link** from the native duplicate, update `INSTALL_URL` in `bridge.py`, and verify the installation QR before releasing the change. Apple does not provide a supported Linux API for publishing an iCloud Shortcut link.
 
 ## License
 
