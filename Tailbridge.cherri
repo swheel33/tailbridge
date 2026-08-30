@@ -1,0 +1,120 @@
+#include 'actions/documents'
+#include 'actions/images'
+#include 'actions/sharing'
+#include 'actions/text'
+#include 'actions/web'
+#define color darkgray
+#ref Shortcuts eyJmaWxlTG9jYXRpb24iOnsicmVsYXRpdmVTdWJwYXRoIjoiIiwiZmlsZVByb3ZpZGVyRG9tYWluSUQiOiJjb20uYXBwbGUuQ2xvdWREb2NzLmlDbG91ZERyaXZlRmlsZVByb3ZpZGVyLzkxQUExMjk2LTg0MzItNEVFQi1BNUFFLTNEQ0E1NjMyQzU4NSIsIldGRmlsZUxvY2F0aW9uVHlwZSI6IlNob3J0Y3V0cyIsImNyb3NzRGV2aWNlSXRlbUlEIjoiZG9jcy5pY2xvdWQuY29tOmlDbG91ZC5pcy53b3JrZmxvdy5teS53b3JrZmxvd3MvZG9jdW1lbnRzLzc1YmRmMmNkZDgyYTIyMDE3YWYzZjEwOGYyMjhlNGZiYTRkYzZkNjciLCJhcHBDb250YWluZXJCdW5kbGVJZGVudGlmaWVyIjoiY29tLmFwcGxlLnNob3J0Y3V0cyJ9LCJmaWxlbmFtZSI6IkRvY3VtZW50cyIsImRpc3BsYXlOYW1lIjoiU2hvcnRjdXRzIn0=
+
+action 'documentpicker.save' saveTailbridgeConfig(
+  variable content: 'WFInput',
+  &variable folder: 'WFFolder'
+) {
+  "WFAskWhereToSave": false,
+  "WFSaveFileOverwrite": true
+}
+
+action 'downloadurl' uploadClipboard(
+  text url: 'WFURL',
+  variable body: 'WFRequestVariable',
+  dictionary! headers: 'WFHTTPHeaders'
+) {
+  "WFHTTPMethod": "POST",
+  "WFHTTPBodyType": "File"
+}
+
+action 'geturlcomponent' tailbridgeURLDetail(
+  text url: 'WFURL',
+  text detail: 'WFURLComponent'
+): text
+
+const input = getText(ShortcutInput)
+
+if input beginsWith "tailbridge-setup:" {
+  const setupInboxURL = replaceText("tailbridge-setup:", "", input)
+  const setupScheme = tailbridgeURLDetail(setupInboxURL, "Scheme")
+  const setupHost = tailbridgeURLDetail(setupInboxURL, "Host")
+  const setupPort = tailbridgeURLDetail(setupInboxURL, "Port")
+  const setupPath = tailbridgeURLDetail(setupInboxURL, "Path")
+
+  if setupScheme == "http" && setupHost beginsWith "100." && setupPort == "45871" && setupPath beginsWith "/v1/inbox/" {
+    const setupCheckURL = replaceText("/v1/inbox/", "/v1/setup/", setupInboxURL)
+    const setupResponseContent = downloadURL(setupCheckURL)
+    const setupResponse = getText(setupResponseContent)
+    if setupResponse == "tailbridge-ready" {
+      const setupFile = setName(setupInboxURL, "Tailbridge.txt")
+      saveTailbridgeConfig(setupFile, Shortcuts)
+      const savedSetupFile = getFile("Tailbridge.txt")
+      const savedInboxURL = getText(savedSetupFile)
+      if savedInboxURL == setupInboxURL {
+        showNotification("Tailbridge configured")
+      } else {
+        showNotification("Tailbridge setup could not save its URL")
+      }
+    } else {
+      showNotification("Tailbridge could not connect to Omarchy")
+    }
+  } else {
+    showNotification("Invalid Tailbridge setup code")
+  }
+  stop()
+} else {
+  const inboxFile = getFile("Tailbridge.txt")
+  const storedInboxURL = getText(inboxFile)
+
+  if input {
+    if !storedInboxURL {
+      showNotification("Open Tailbridge on Omarchy and run iPhone setup")
+      stop()
+    } else {
+      const claimScheme = tailbridgeURLDetail(input, "Scheme")
+      const claimHost = tailbridgeURLDetail(input, "Host")
+      const claimPort = tailbridgeURLDetail(input, "Port")
+      const claimPath = tailbridgeURLDetail(input, "Path")
+      const inboxScheme = tailbridgeURLDetail(storedInboxURL, "Scheme")
+      const inboxHost = tailbridgeURLDetail(storedInboxURL, "Host")
+      const inboxPort = tailbridgeURLDetail(storedInboxURL, "Port")
+
+      if claimScheme == inboxScheme && claimHost == inboxHost && claimPort == inboxPort && claimPath beginsWith "/v1/claims/" {
+        const item = downloadURL(input)
+        setClipboard(item)
+        showNotification("Copied from Omarchy")
+      } else {
+        showNotification("Invalid Tailbridge clipboard code")
+      }
+    }
+  } else {
+    const clipboard = getClipboard()
+    const clipboardType = typeOf(clipboard)
+
+    if !storedInboxURL {
+      showNotification("Open Tailbridge on Omarchy and run iPhone setup")
+      stop()
+    }
+
+    if clipboardType == "Image" {
+      const image = convertImage(clipboard, "PNG")
+      uploadClipboard(storedInboxURL, image, {
+        "Content-Type": "image/png",
+        "X-Tailbridge-Kind": "image",
+        "X-Tailbridge-Name": "Tailbridge.png"
+      })
+    } else {
+      if clipboardType == "Text" || clipboardType == "URL" || clipboardType == "Rich Text" {
+        const text = getText(clipboard)
+        uploadClipboard(storedInboxURL, text, {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Tailbridge-Kind": "text"
+        })
+      } else {
+        const name = getName(clipboard)
+        uploadClipboard(storedInboxURL, clipboard, {
+          "Content-Type": "application/octet-stream",
+          "X-Tailbridge-Kind": "file",
+          "X-Tailbridge-Name": "{name}"
+        })
+      }
+    }
+    showNotification("Copied to Omarchy")
+  }
+}
