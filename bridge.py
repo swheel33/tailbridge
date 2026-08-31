@@ -11,6 +11,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -72,10 +73,19 @@ class Bridge:
         if state is None:
             state = self.state
         self.state_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
-        temporary = self.state_file.with_suffix(".tmp")
-        temporary.write_text(json.dumps(state, separators=(",", ":")), encoding="utf-8")
-        os.chmod(temporary, 0o600)
-        temporary.replace(self.state_file)
+        descriptor, temporary_name = tempfile.mkstemp(dir=self.state_dir)
+        temporary = Path(temporary_name)
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as destination:
+                descriptor = -1
+                json.dump(state, destination, separators=(",", ":"))
+            temporary.replace(self.state_file)
+        except Exception:
+            if descriptor >= 0:
+                os.close(descriptor)
+            temporary.unlink(missing_ok=True)
+            raise
 
     def emit(self, message):
         with self.output_lock:
