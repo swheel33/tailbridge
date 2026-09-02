@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "swheel33",
   "license": "MIT",
-  "description": "Move clipboard content between Omarchy and iPhone over Tailscale.",
+  "description": "Send clipboard text, images, and files between Omarchy and iPhone over your private Tailscale network. Trigger transfers using the iPhone Action Button or Shortcuts, and copy from Omarchy using a one-time QR code. No companion iOS app required.",
   "kinds": ["service", "bar-widget"],
   "entryPoints": {
     "service": "Service.qml",
