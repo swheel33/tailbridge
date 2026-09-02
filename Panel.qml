@@ -103,6 +103,7 @@ Panel {
 
       Text {
         text: actionRow.iconText
+        textFormat: Text.PlainText
         visible: text !== ""
         color: root.foreground
         font.family: root.fontFamily
@@ -118,6 +119,7 @@ Panel {
 
         Text {
           text: actionRow.title
+          textFormat: Text.PlainText
           color: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.body
@@ -127,6 +129,7 @@ Panel {
 
         Text {
           text: actionRow.subtitle
+          textFormat: Text.PlainText
           visible: text !== ""
           color: root.dim
           font.family: root.fontFamily
@@ -138,6 +141,7 @@ Panel {
 
       Text {
         text: actionRow.actionIcon
+        textFormat: Text.PlainText
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.icon
@@ -169,6 +173,7 @@ Panel {
           id: headerIcon
           visible: !root.showingQr
           text: service && service.configured ? "󰅍" : "󰨸"
+          textFormat: Text.PlainText
           color: root.foreground
           opacity: service && service.phase === "ready" ? 1.0 : 0.5
           font.family: root.fontFamily
@@ -187,6 +192,7 @@ Panel {
 
           Text {
             text: root.showingQr ? root.qrTitle : "Tailbridge"
+            textFormat: Text.PlainText
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.title
@@ -203,12 +209,14 @@ Panel {
               : service.phase === "starting" ? "Starting"
               : service.configured ? root.activePhrase
               : "iPhone setup required").toUpperCase()
+            textFormat: Text.PlainText
             color: Qt.darker(root.foreground, 1.4)
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
             font.bold: true
             font.letterSpacing: 1.2
             elide: Text.ElideRight
+            maximumLineCount: 1
             width: parent.width
           }
         }
@@ -226,6 +234,7 @@ Panel {
           Text {
             anchors.centerIn: parent
             text: "\u2039"
+            textFormat: Text.PlainText
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.title
@@ -251,6 +260,7 @@ Panel {
         visible: !root.showingQr && service && service.qrBusy
         width: parent.width
         text: "Generating QR code..."
+        textFormat: Text.PlainText
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
@@ -261,10 +271,13 @@ Panel {
         visible: !root.showingQr && service && service.qrError !== ""
         width: parent.width
         text: service ? service.qrError : ""
+        textFormat: Text.PlainText
         color: root.urgent
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
         wrapMode: Text.WordWrap
+        maximumLineCount: 3
+        elide: Text.ElideRight
       }
 
       PanelSeparator {
@@ -285,6 +298,7 @@ Panel {
         Text {
           width: parent.width
           text: root.qrInstruction
+          textFormat: Text.PlainText
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.bodySmall
@@ -330,6 +344,7 @@ Panel {
             id: claimExpiry
             anchors.left: parent.left
             text: "Expires in 5 minutes"
+            textFormat: Text.PlainText
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -339,6 +354,7 @@ Panel {
             id: refreshCode
             anchors.right: parent.right
             text: service && service.qrBusy ? "Refreshing..." : "Refresh code"
+            textFormat: Text.PlainText
             color: refreshMouse.containsMouse && refreshMouse.enabled ? root.foreground : root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -424,6 +440,7 @@ Panel {
 
           Text {
             text: "+"
+            textFormat: Text.PlainText
             color: setupMouse.containsMouse ? root.foreground : root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -431,6 +448,7 @@ Panel {
 
           Text {
             text: "Set up another iPhone"
+            textFormat: Text.PlainText
             color: setupMouse.containsMouse ? root.foreground : root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption

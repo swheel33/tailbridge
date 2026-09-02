@@ -92,6 +92,25 @@ Item {
     qrRequestId = ""
   }
 
+  function boundedString(value, limit) {
+    return String(value || "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").slice(0, limit)
+  }
+
+  function allowedString(value, allowed, fallback) {
+    var candidate = boundedString(value, 32)
+    return allowed.indexOf(candidate) !== -1 ? candidate : fallback
+  }
+
+  function validQrRows(rows) {
+    if (!Array.isArray(rows) || rows.length !== 65) return false
+    for (var index = 0; index < rows.length; index += 1) {
+      if (typeof rows[index] !== "string"
+          || rows[index].length !== rows.length
+          || !/^[01]+$/.test(rows[index])) return false
+    }
+    return true
+  }
+
   function handleLine(line) {
     var message
     try {
@@ -100,22 +119,26 @@ Item {
       console.warn("tailbridge: ignored malformed service output")
       return
     }
+    if (message === null || typeof message !== "object" || Array.isArray(message)) {
+      console.warn("tailbridge: ignored malformed service output")
+      return
+    }
     if (message.event === "ready") {
-      baseUrl = String(message.baseUrl || "")
-      phase = String(message.status || "inactive")
-      detail = String(message.detail || "")
+      baseUrl = boundedString(message.baseUrl, 256)
+      phase = allowedString(message.status, ["starting", "ready", "error", "inactive"], "inactive")
+      detail = boundedString(message.detail, 512)
       configured = message.configured === true
       return
     }
     if (message.event === "fatal") {
       fatalSeen = true
       phase = "error"
-      detail = String(message.error || "Tailbridge failed to start")
+      detail = boundedString(message.error || "Tailbridge failed to start", 512)
       return
     }
     if (message.event === "status") {
-      phase = String(message.status || "error")
-      detail = String(message.detail || "")
+      phase = allowedString(message.status, ["starting", "ready", "error", "inactive"], "error")
+      detail = boundedString(message.detail, 512)
       return
     }
     if (message.id !== undefined) {
@@ -125,15 +148,24 @@ Item {
         requestTimer.stop()
         qrBusy = false
         qrRequestId = ""
-        qrError = String(message.error || "Tailbridge request failed")
+        qrError = boundedString(message.error || "Tailbridge request failed", 512)
         return
       }
       if (Array.isArray(message.rows)) {
         if (responseId !== qrRequestId) return
         requestTimer.stop()
-        qrKind = String(message.kind || "")
-        qrItemKind = String(message.itemKind || "")
-        qrItemName = String(message.itemName || "")
+        var responseKind = allowedString(message.kind, ["install", "setup", "claim"], "")
+        var responseItemKind = allowedString(message.itemKind, ["text", "image", "file"], "")
+        if (!validQrRows(message.rows) || responseKind === ""
+            || (responseKind === "claim" && responseItemKind === "")) {
+          qrBusy = false
+          qrRequestId = ""
+          qrError = "Tailbridge returned an invalid QR code"
+          return
+        }
+        qrKind = responseKind
+        qrItemKind = responseItemKind
+        qrItemName = boundedString(message.itemName, 255)
         qrRows = message.rows
         qrBusy = false
         qrRequestId = ""
@@ -171,7 +203,7 @@ Item {
 
   Timer {
     id: requestTimer
-    interval: 15000
+    interval: 30000
     repeat: false
     onTriggered: {
       root.qrBusy = false
